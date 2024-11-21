@@ -1,0 +1,77 @@
+zero = Ls.Lz.z
+scc = Ln.Ls.Lz.s (n s z)
+pred = Ln.Lf.Lx.n (Lg.Lh.h (g f)) (Lu.x) (Lu.u)
+sub = Lm.Ln.n pred m
+one = scc zero
+two = scc one
+three = scc two
+four = scc three
+add = Lm.Ln.m scc n
+pow = Lx.Ly.y x
+mul = Lm.Ln.m (add n) zero
+tru = Lx.Ly.x
+fls = Lx.Ly.y
+
+or = Lp.Lq.p tru q
+and = Lp.Lq.p q p
+not = Lp.p fls tru
+
+if = Lp.La.Lb.p a b
+pair = La.Lb.Lf.f a b
+first = Lp.p (La.Lb.a)
+second = Lp.p (La.Lb.b)
+
+cons = La.Lb.Lf.Lx.f a (b f x)
+nil = Lf.Lx.x
+isnil = Ll.l (La.Lb.false) true
+head = Ll.l (La.Lb.a) nil
+tail = Ll.l (La.Lt.t) nil
+
+left = Ll.Lr.Ls.l
+right = Ll.Lr.Ls.r
+symbol = Ll.Lr.Ls.s
+
+moveRight = Lt.right t (cons (head (left t)) (right t)) (tail (left t))
+moveLeft = Lt.left (cons (head (right t)) (left t)) (tail (right t)) (symbol t)
+
+read = Lt.head (right t)
+write = Lt.Ln.left t (cons n (tail (right t))) (symbol t)
+
+yComb = Lf.(Lx.f (x x)) (Lx.f (x x))
+
+isZero = Ln.n (Lx.fls) tru
+
+
+factAux = yComb (Lf.La.Ln.(if (isZero n) a (f (mul a n) (pred n))))
+
+factorial = Ln.factAux one n
+
+factorialINFINITE = yComb (Lf.Ln.(if (isZero n) (one) (mul n (f (pred n)))))
+
+isEven = Ln.isZero (n not tru)
+
+incUntilOdd = yComb (Lf.Ln.isEven n (f (scc n)) n)
+
+
+leq = Lm.Ln.isZero (sub m n)
+eq = Lm.Ln.and (leq m n) (leq n m)
+
+fact = Ln.n (Lf.Lx.mul x (f (pred x))) (Lx.scc zero) one
+fib = Ln.fst (n (Lp.pair (snd p) (add (fst p) (snd p))) (pair zero one))
+
+
+
+yeaThree = add one two
+yeaTwo = sub four two
+
+powNine = two three
+powTwoSev = three three
+
+
+yeaThree
+mul yeaTwo yeaThree
+
+powNine
+powTwoSev
+
+fib three
