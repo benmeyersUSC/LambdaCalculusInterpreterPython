@@ -20,6 +20,8 @@ if = Lp.La.Lb.p a b
 pair = La.Lb.Lf.f a b
 first = Lp.p (La.Lb.a)
 second = Lp.p (La.Lb.b)
+fst = first
+snd = second
 
 cons = La.Lb.Lf.Lx.f a (b f x)
 nil = Lf.Lx.x
@@ -74,4 +76,4 @@ mul yeaTwo yeaThree
 powNine
 powTwoSev
 
-fib three
+fib four

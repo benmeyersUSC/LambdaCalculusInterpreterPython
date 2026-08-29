@@ -6,7 +6,7 @@ const el = { boot:$("boot"), stage:$("bootstage"), panes:$("panes"), src:$("src"
   gutter:$("gutter"), run:$("run"), revert:$("revert"), stop:$("stop"),
   scroll:$("scroll"), line:$("line"), term:$("term"), envcount:$("envcount"),
   detail:$("detail"), ast:$("p-ast"), trace:$("p-trace"), source:$("p-source"),
-  note:$("detailnote") };
+  note:$("detailnote"), retry:$("retry") };
 
 const URLS = {
   interpreter: new URL("./lambda_calculus_interpreter.py", location.href).href,
@@ -15,16 +15,34 @@ const URLS = {
 };
 
 let worker = null, ready = false, seq = 0, pending = new Map();
+let lastStage = "Starting…", watchdog = null;
 let program = "";           // the last text handed to the interpreter as the environment
 let history = [], hpos = 0, envNames = [];
 
 /* ---------- worker plumbing ---------- */
 
+/* A stalled request never rejects, so nothing downstream can notice it. This
+ * bounds the whole boot instead: any 45s with no progress at all is reported
+ * as stuck, naming the step it stopped on, with a way to start over. */
+function armWatchdog() {
+  clearTimeout(watchdog);
+  watchdog = setTimeout(() => {
+    if (ready) return;
+    el.boot.classList.add("err");
+    el.stage.textContent = `Stuck on “${lastStage}”. The network stalled rather than failed.`;
+    el.retry.hidden = false;
+  }, 45000);
+}
+
 function spawn() {
+  ready = false;
+  el.retry.hidden = true;
+  el.boot.classList.remove("err");
+  armWatchdog();
   worker = new Worker("web/worker.js");
   worker.onmessage = (e) => {
     const m = e.data;
-    if (m.type === "boot")  { el.stage.textContent = m.stage; return; }
+    if (m.type === "boot")  { lastStage = m.stage; el.stage.textContent = m.stage; armWatchdog(); return; }
     if (m.type === "ready") { onReady(m); return; }
     if (m.type === "fatal") {
       m.payload = { ok: false, kind: "fatal", error: m.error };
@@ -50,10 +68,19 @@ function ask(msg) {
 }
 
 function fail(message) {
+  clearTimeout(watchdog);
   el.boot.hidden = false;
   el.boot.classList.add("err");
   el.stage.textContent = "Could not start: " + message;
+  el.retry.hidden = false;
 }
+
+el.retry.addEventListener("click", () => {
+  if (worker) worker.terminate();
+  pending.clear();
+  el.stage.textContent = "Starting…";
+  spawn();
+});
 
 /* ---------- rendering ---------- */
 
@@ -255,9 +282,8 @@ el.stop.addEventListener("click", async () => {
     resolve({ payload: { ok: false, kind: "stopped", error: "abandoned" } });
   pending.clear();
   el.stop.hidden = true;
-  ready = false;
   add("err", "stopped — restarting the interpreter");
-  el.boot.hidden = false; el.boot.classList.remove("err");
+  el.boot.hidden = false;
   spawn();
 });
 
@@ -275,6 +301,7 @@ document.querySelectorAll(".tab").forEach((t) => {
 
 async function onReady(m) {
   ready = true;
+  clearTimeout(watchdog);
   el.boot.hidden = true;
   el.panes.hidden = false;
 

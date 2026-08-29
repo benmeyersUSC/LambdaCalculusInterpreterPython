@@ -15,21 +15,44 @@ let bridge = null;
 
 const post = (msg) => self.postMessage(msg);
 
+/* Every await in here can stall on a network that neither answers nor fails,
+ * and a stalled fetch has no timeout of its own -- it simply never settles,
+ * which reaches the page as a boot message that sits there forever. So each
+ * step is bounded, retried, and reports which step it was on. */
+
+async function fetchText(url, label, attempts = 3) {
+  let why = "unknown";
+  for (let i = 1; i <= attempts; i++) {
+    post({ type: "boot", stage: i === 1 ? label : `${label} (retry ${i - 1})` });
+    try {
+      // First attempt revalidates so the page can never serve a stale
+      // interpreter; a retry accepts whatever the cache has, because by then
+      // an answer matters more than freshness.
+      const r = await fetch(url, {
+        cache: i === 1 ? "no-cache" : "default",
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.text();
+    } catch (err) {
+      why = err.name === "TimeoutError" || /abort|signal/i.test(err.message || "")
+        ? "no response after 12s" : String(err.message || err);
+      post({ type: "boot", stage: `${label} — ${why}` });
+    }
+  }
+  throw new Error(`${label.toLowerCase()} failed — ${why}. Requested ${url}`);
+}
+
 async function boot(urls) {
-  post({ type: "boot", stage: "Downloading CPython (WebAssembly)…" });
+  post({ type: "boot", stage: "Downloading CPython (WebAssembly) — about 11 MB, once" });
   py = await loadPyodide({ indexURL: PYODIDE });
 
-  post({ type: "boot", stage: "Loading interpreter…" });
   // Fetched, not bundled: the page serves the same lambda_calculus_interpreter.py
   // that sits at the root of the repo, so the site can never drift from the source.
-  const [interp, glue] = await Promise.all(
-    [urls.interpreter, urls.bridge].map((u) =>
-      fetch(u, { cache: "no-cache" }).then((r) => {
-        if (!r.ok) throw new Error(`${u} -> HTTP ${r.status}`);
-        return r.text();
-      })
-    )
-  );
+  const interp = await fetchText(urls.interpreter, "Loading interpreter");
+  const glue = await fetchText(urls.bridge, "Loading adapter");
+
+  post({ type: "boot", stage: "Starting Python…" });
   py.FS.writeFile("/home/pyodide/lambda_calculus_interpreter.py", interp);
   py.FS.writeFile("/home/pyodide/bridge.py", glue);
 
