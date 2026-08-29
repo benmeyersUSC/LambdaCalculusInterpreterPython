@@ -44,6 +44,9 @@ h1{margin:0 0 .2rem; font-size:1.45rem; letter-spacing:-.02em}
          border-top-color:var(--accent); border-radius:50%;
          animation:spin .8s linear infinite; flex:none}
 .boot.err .spinner{display:none}
+.boot{flex-wrap:wrap}
+.stagelog{display:block; width:100%; margin-top:.35rem; color:var(--dim);
+          font:11px/1.5 var(--mono)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---- panes ---- */

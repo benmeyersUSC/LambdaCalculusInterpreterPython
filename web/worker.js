@@ -52,21 +52,34 @@ async function boot(urls) {
   const interp = await fetchText(urls.interpreter, "Loading interpreter");
   const glue = await fetchText(urls.bridge, "Loading adapter");
 
-  post({ type: "boot", stage: "Starting Python…" });
+  // This stretch is synchronous, and a WebAssembly abort inside it (memory
+  // exhaustion, a stack overflow in the runtime) kills the worker outright:
+  // no exception to catch, no error event, no further messages. From the page
+  // that is indistinguishable from a step taking a very long time. So each
+  // operation announces itself first -- whatever stage is on screen when the
+  // worker dies is the one that killed it.
+  post({ type: "boot", stage: "Writing the interpreter into Python" });
   py.FS.writeFile("/home/pyodide/lambda_calculus_interpreter.py", interp);
   py.FS.writeFile("/home/pyodide/bridge.py", glue);
 
   // Deep reduction is normal here; the limit only has to sit far enough below
   // the WebAssembly stack that Python raises RecursionError (catchable) rather
   // than the runtime overflowing (fatal -- it would take the worker with it).
+  post({ type: "boot", stage: "Importing the interpreter" });
   py.runPython(`
 import sys
 sys.setrecursionlimit(${urls.recursionLimit || 2200})
 sys.path.insert(0, "/home/pyodide")
 import bridge
 `);
+
+  post({ type: "boot", stage: "Linking the adapter" });
   bridge = py.pyimport("bridge");
-  post({ type: "ready", python: bridge.version(), lines: interp.split("\n").length });
+
+  // Read into plain JS before postMessage: a PyProxy is not structured-cloneable
+  // and would throw here rather than at any obvious point.
+  const python = String(bridge.version());
+  post({ type: "ready", python, lines: interp.split("\n").length });
 }
 
 function toJs(result) {

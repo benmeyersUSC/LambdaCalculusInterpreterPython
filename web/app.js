@@ -15,34 +15,48 @@ const URLS = {
 };
 
 let worker = null, ready = false, seq = 0, pending = new Map();
-let lastStage = "Starting…", watchdog = null;
+let lastStage = "Starting…", watchdog = null, stageLog = [], bootStart = 0;
 let program = "";           // the last text handed to the interpreter as the environment
 let history = [], hpos = 0, envNames = [];
 
 /* ---------- worker plumbing ---------- */
 
-/* A stalled request never rejects, so nothing downstream can notice it. This
- * bounds the whole boot instead: any 45s with no progress at all is reported
- * as stuck, naming the step it stopped on, with a way to start over. */
+/* Two different failures look identical from here: a request that stalls
+ * without ever settling, and a WebAssembly abort that kills the worker with no
+ * error event. Neither produces an exception, so neither can be caught. What
+ * they have in common is that progress stops, which is what this watches for.
+ * The stage on screen when it stops is the one that failed. */
 function armWatchdog() {
   clearTimeout(watchdog);
   watchdog = setTimeout(() => {
     if (ready) return;
     el.boot.classList.add("err");
-    el.stage.textContent = `Stuck on “${lastStage}”. The network stalled rather than failed.`;
+    el.stage.innerHTML =
+      `Stuck on <b>${esc(lastStage)}</b> for 25s. ` +
+      `<span class="stagelog">${esc(stageLog.join("  →  "))}</span>`;
     el.retry.hidden = false;
-  }, 45000);
+    console.warn("[boot] stuck at:", lastStage, "\ntimeline:", stageLog.join("\n"));
+  }, 25000);
 }
 
 function spawn() {
   ready = false;
+  bootStart = performance.now();
+  stageLog = [];
   el.retry.hidden = true;
   el.boot.classList.remove("err");
   armWatchdog();
   worker = new Worker("web/worker.js");
   worker.onmessage = (e) => {
     const m = e.data;
-    if (m.type === "boot")  { lastStage = m.stage; el.stage.textContent = m.stage; armWatchdog(); return; }
+    if (m.type === "boot") {
+      lastStage = m.stage;
+      stageLog.push(`${((performance.now() - bootStart) / 1000).toFixed(1)}s ${m.stage}`);
+      console.log("[boot]", stageLog[stageLog.length - 1]);
+      el.stage.textContent = m.stage;
+      armWatchdog();
+      return;
+    }
     if (m.type === "ready") { onReady(m); return; }
     if (m.type === "fatal") {
       m.payload = { ok: false, kind: "fatal", error: m.error };
@@ -306,6 +320,7 @@ document.querySelectorAll(".tab").forEach((t) => {
 async function onReady(m) {
   ready = true;
   clearTimeout(watchdog);
+  console.log("[boot] ready in", ((performance.now() - bootStart) / 1000).toFixed(1) + "s");
   el.boot.hidden = true;
   el.panes.hidden = false;
 
