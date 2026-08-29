@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lambda Calculus Interpreter</title>
+<meta name="description" content="A lambda calculus interpreter written in Python, running in your browser. Lexes, parses, compiles, and evaluates.">
+<link rel="stylesheet" href="web/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23b79cff'>λ</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="lam">λ</span>
+    <div>
+      <h1>Lambda Calculus Interpreter</h1>
+      <p class="sub">Lexes, parses, compiles, and evaluates the untyped lambda calculus.
+        Written in Python &mdash; and this page is running that Python, unmodified, in your browser.</p>
+    </div>
+  </div>
+  <nav class="links">
+    <a href="https://github.com/benmeyersUSC/LambdaCalculusInterpreterPython">Repository</a>
+    <a href="https://benmeyersusc.github.io/Portfolio/">Portfolio</a>
+  </nav>
+</header>
+
+<div id="boot" class="boot">
+  <span class="spinner" aria-hidden="true"></span>
+  <span id="bootstage">Starting…</span>
+</div>
+
+<main class="panes" hidden id="panes">
+
+  <section class="pane" id="pane-program">
+    <div class="pane-head">
+      <h2>Program</h2>
+      <div class="pane-tools">
+        <button id="run" class="btn btn-primary" title="Run the whole program (⌘⏎ / Ctrl+⏎)">Run</button>
+        <button id="revert" class="btn" title="Restore code.lambda from the repository">Revert</button>
+      </div>
+    </div>
+    <div class="editor">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+      <textarea id="src" spellcheck="false" autocomplete="off" autocapitalize="off"
+                aria-label="Lambda calculus program"></textarea>
+    </div>
+    <p class="hint">One statement per line. <code>name = expr</code> defines; a bare
+      expression is evaluated. <code>L</code> is the lambda: <code>Lx.x</code> is the identity.</p>
+  </section>
+
+  <section class="pane" id="pane-term">
+    <div class="pane-head">
+      <h2>Terminal</h2>
+      <div class="pane-tools">
+        <span id="envcount" class="pill" title="Definitions in scope">0 defs</span>
+        <button id="stop" class="btn btn-stop" hidden title="Abandon a non-terminating reduction">Stop</button>
+      </div>
+    </div>
+    <div class="term" id="term" tabindex="-1">
+      <div id="scroll" class="scroll"></div>
+      <div class="prompt-row">
+        <span class="ps1">&lambda;&gt;</span>
+        <input id="line" class="line" spellcheck="false" autocomplete="off"
+               autocapitalize="off" aria-label="Terminal input" placeholder="try:  mul three four">
+      </div>
+    </div>
+    <p class="hint"><code>:help</code> for commands &middot; &uarr;&darr; for history
+      &middot; definitions from the program are in scope</p>
+  </section>
+
+</main>
+
+<section class="detail" id="detail" hidden>
+  <div class="tabs" role="tablist">
+    <button class="tab is-on" data-tab="ast" role="tab">Syntax tree</button>
+    <button class="tab" data-tab="trace" role="tab">Compiler trace</button>
+    <button class="tab" data-tab="source" role="tab">Interpreter source</button>
+    <span class="tabfill"></span>
+    <span class="pill" id="detailnote"></span>
+  </div>
+  <pre class="panel" id="p-ast" role="tabpanel"></pre>
+  <pre class="panel" id="p-trace" role="tabpanel" hidden></pre>
+  <pre class="panel" id="p-source" role="tabpanel" hidden></pre>
+</section>
+
+<footer class="foot">
+  <p><strong>How this page works.</strong> There is no server. The interpreter is
+  <code>lambda_calculus_interpreter.py</code> from the root of this repository; the page fetches
+  that exact file and runs it on CPython compiled to WebAssembly
+  (<a href="https://pyodide.org">Pyodide</a>). Nothing about the interpreter was
+  changed to make this work &mdash; <code>web/bridge.py</code> is a thin adapter that
+  drives the same tokenize &rarr; parse &rarr; compile &rarr; evaluate pipeline and hands
+  the results back as data instead of writing them to disk.</p>
+</footer>
+
+<script src="web/app.js"></script>
+</body>
+</html>

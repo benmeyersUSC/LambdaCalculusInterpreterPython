@@ -1,0 +1,7 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+
+# Written by the interpreter when it visualizes a parse tree.
+*_parsed_tree.txt

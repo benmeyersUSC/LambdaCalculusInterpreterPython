@@ -1,2 +1,13 @@
 title: Lambda Calculus Interpreter
 tagline: Lexes, parses, compiles, and evaluates lambda calculus in Python
+description: |
+  A complete interpreter for the untyped lambda calculus, written from scratch in
+  Python: a hand-rolled tokenizer, a recursive-descent parser, a compile pass that
+  resolves defined names into terms, and a beta-reducer with capture-avoiding
+  substitution and alpha-renaming. Church numerals, booleans, pairs, lists and the
+  Y combinator all fall out of it -- the repo's sample program builds arithmetic,
+  comparison and a Turing machine tape from nothing but functions.
+
+  The live link is that same Python file, unmodified, running on CPython compiled to
+  WebAssembly: an editor for whole programs, and a terminal for evaluating
+  expressions against the definitions they leave in scope.
