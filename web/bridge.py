@@ -119,7 +119,10 @@ def run(source, want_ast=True):
     for src, term in zip(LI.EXPRS, evaluated):
         kind, value = _label(term)
         results.append({"src": src, "term": repr(term), "kind": kind, "value": value})
-    return {"ok": True, "results": results, "defined": names,
+    # Same shape as repl() returns, so the caller never has to ask which
+    # entry point it came from.
+    return {"ok": True, "results": results,
+            "defined": [{"name": n, "how": "defined"} for n in names],
             "ast": ast, "trace": trace.getvalue()}
 
 

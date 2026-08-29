@@ -128,8 +128,12 @@ function showResults(res, opts = {}) {
       if (opts.echoSource) add("term-out", esc(r.src));
       el.scroll.insertAdjacentHTML("beforeend", value(r));
     }
-    for (const d of res.defined || [])
-      add("note", `${d.how} <b>${esc(d.name)}</b>`);
+    const defs = res.defined || [];
+    if (opts.summarizeDefs) {
+      if (defs.length) add("note", `${defs.length} definitions in scope`);
+    } else {
+      for (const d of defs) add("note", `${d.how} <b>${esc(d.name)}</b>`);
+    }
     if (res.ok && !res.results.length && !(res.defined || []).length)
       add("note", "no expressions to evaluate");
   }
@@ -173,7 +177,7 @@ async function runProgram() {
   envNames = names.names || [];
   const res = (await ask({ type: "run", source, wantAst: true })).payload;
   program = source;
-  showResults(res, { echoSource: true });
+  showResults(res, { echoSource: true, summarizeDefs: true });
   setDetail(res, `${envNames.length} definitions · ${res.ok ? res.results.length : 0} expressions`);
   el.envcount.textContent = `${envNames.length} defs`;
 }
