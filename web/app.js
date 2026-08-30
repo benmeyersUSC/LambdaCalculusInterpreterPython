@@ -269,7 +269,7 @@ async function submit(raw) {
     envNames = (await ask({ type: "env" })).env.map((d) => d.name);
     el.envcount.textContent = `${envNames.length} defs`;
   }
-  if (res.trace) { el.trace.textContent = res.trace; el.detail.hidden = false; }
+  if (res.trace) el.trace.textContent = res.trace;
 }
 
 el.line.addEventListener("keydown", (e) => {
@@ -334,8 +334,9 @@ async function onReady(m) {
     add("banner",
       `<b>Lambda calculus</b>, evaluated by <b>lambda_calculus_interpreter.py</b> ` +
       `(${m.lines} lines) on CPython ${m.python} compiled to WebAssembly.\n` +
-      `Press <kbd>Run</kbd> to evaluate the program on the left, then type ` +
-      `expressions here. <code>:help</code> for commands.`);
+      `The program on the left is loaded and its definitions are in scope — ` +
+      `type expressions here. <code>:help</code> for commands.`);
+    await runProgram();     // otherwise the first thing typed has nothing to reduce against
   } else {                                          // restarted after a Stop
     await ask({ type: "setProgram", source: program });
     add("note", "interpreter restarted; definitions restored");

@@ -69,11 +69,3 @@ yeaTwo = sub four two
 powNine = two three
 powTwoSev = three three
 
-
-yeaThree
-mul yeaTwo yeaThree
-
-powNine
-powTwoSev
-
-fib four

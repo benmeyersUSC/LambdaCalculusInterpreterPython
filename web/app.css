@@ -15,6 +15,10 @@
     --accent:#6b46d9; --num:#12855a; --bool:#a2650a; --err:#c03535;
   }
 }
+/* A class selector outranks the user-agent [hidden] rule, so any element that
+   sets display in a class -- .boot, .panes -- ignores its hidden attribute
+   entirely. This has to win over all of them. */
+[hidden]{display:none !important}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
